@@ -31,7 +31,7 @@ void displayFilterMenu() {
 int main() {
     t_bmp8 * img = NULL; // Pointer to hold the loaded image
     int choice, filterChoice; // Variables to store user choices
-    char filePath[256]; // Buffer to store file path
+    char filePath[256] = "lena_gray.bmp"; // Default file path
     int brightnessValue, thresholdValue; // Variables for filter parameters
 
     while (1) { // Infinite loop to keep the menu running
@@ -40,7 +40,7 @@ int main() {
 
         switch (choice) {
             case 1: // Open an image
-                printf("File path: ");
+                printf("File path (default: lena_gray.bmp): ");
                 scanf("%s", filePath); // Read the file path
                 img = bmp8_loadImage(filePath); // Load the image
                 if (img == NULL) {
@@ -53,7 +53,7 @@ int main() {
                 if (img == NULL) {
                     printf("No image loaded\n");
                 } else {
-                    printf("File path: ");
+                    printf("File path (default: lena_color.bmp): ");
                     scanf("%s", filePath); // Read the file path
                     bmp8_saveImage(filePath, img); // Save the image
                     printf("Image saved successfully!\n");
