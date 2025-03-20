@@ -82,51 +82,56 @@ int main() {
                             bmp8_threshold(img, thresholdValue);
                             printf("Filter applied successfully!\n");
                             break;
-                        case 4: // Apply box blur filter
-                            float boxBlurKernel[3][3] = {
-                                {1.0/9, 1.0/9, 1.0/9},
-                                {1.0/9, 1.0/9, 1.0/9},
-                                {1.0/9, 1.0/9, 1.0/9}
+                        case 4: { // Apply box blur filter
+                            int boxBlurKernel[3][3] = {
+                                {1, 1, 1},
+                                {1, 1, 1},
+                                {1, 1, 1}
                             };
-                            bmp8_applyFilter(img, (float **)boxBlurKernel, 3);
+                            bmp8_applyFilter(img, (int *)boxBlurKernel, 3, 9);
                             printf("Box Blur filter applied successfully!\n");
                             break;
-                        case 5: // Apply Gaussian blur filter
-                            float gaussianBlurKernel[3][3] = {
-                                {1.0/16, 2.0/16, 1.0/16},
-                                {2.0/16, 4.0/16, 2.0/16},
-                                {1.0/16, 2.0/16, 1.0/16}
+                        }
+                        case 5: { // Apply Gaussian blur filter
+                            int gaussianBlurKernel[3][3] = {
+                                {1, 2, 1},
+                                {2, 4, 2},
+                                {1, 2, 1}
                             };
-                            bmp8_applyFilter(img, (float **)gaussianBlurKernel, 3);
+                            bmp8_applyFilter(img, (int *)gaussianBlurKernel, 3, 16);
                             printf("Gaussian Blur filter applied successfully!\n");
                             break;
-                        case 6: // Apply sharpness filter
-                            float sharpnessKernel[3][3] = {
+                        }
+                        case 6: { // Apply sharpness filter
+                            int sharpnessKernel[3][3] = {
                                 {0, -1, 0},
                                 {-1, 5, -1},
                                 {0, -1, 0}
                             };
-                            bmp8_applyFilter(img, (float **)sharpnessKernel, 3);
+                            bmp8_applyFilter(img, (int *)sharpnessKernel, 3, 1);
                             printf("Sharpness filter applied successfully!\n");
                             break;
-                        case 7: // Apply outline filter
-                            float outlineKernel[3][3] = {
+                        }
+                        case 7: { // Apply outline filter
+                            int outlineKernel[3][3] = {
                                 {-1, -1, -1},
                                 {-1, 8, -1},
                                 {-1, -1, -1}
                             };
-                            bmp8_applyFilter(img, (float **)outlineKernel, 3);
+                            bmp8_applyFilter(img, (int *)outlineKernel, 3, 1);
                             printf("Outline filter applied successfully!\n");
                             break;
-                        case 8: // Apply emboss filter
-                            float embossKernel[3][3] = {
+                        }
+                        case 8: { // Apply emboss filter
+                            int embossKernel[3][3] = {
                                 {-2, -1, 0},
                                 {-1, 1, 1},
                                 {0, 1, 2}
                             };
-                            bmp8_applyFilter(img, (float **)embossKernel, 3);
+                            bmp8_applyFilter(img, (int *)embossKernel, 3, 1);
                             printf("Emboss filter applied successfully!\n");
                             break;
+                        }
                         case 9: // Return to the previous menu
                             break;
                         default:

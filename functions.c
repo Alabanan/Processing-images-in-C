@@ -95,21 +95,21 @@ void bmp8_threshold(t_bmp8 * img, int threshold) {
     }
 }
 
-void bmp8_applyFilter(t_bmp8 * img, float ** kernel, int kernelSize) {
+void bmp8_applyFilter(t_bmp8 * img, int * kernel, int kernelSize, int kernelSum) {
     unsigned char * newData = (unsigned char *)malloc(img->dataSize);
     for (unsigned int i = 0; i < img->height; i++) {
         for (unsigned int j = 0; j < img->width; j++) {
-            float sum = 0;
+            int sum = 0;
             for (int k = 0; k < kernelSize; k++) {
                 for (int l = 0; l < kernelSize; l++) {
                     int x = i + k - kernelSize / 2;
                     int y = j + l - kernelSize / 2;
                     if (x >= 0 && x < img->height && y >= 0 && y < img->width) {
-                        sum += img->data[x * img->width + y] * kernel[k][l];
+                        sum += img->data[x * img->width + y] * kernel[k * kernelSize + l];
                     }
                 }
             }
-            newData[i * img->width + j] = (unsigned char)sum;
+            newData[i * img->width + j] = (unsigned char)(sum / kernelSum);
         }
     }
     free(img->data);
