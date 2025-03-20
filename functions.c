@@ -3,7 +3,7 @@
 #include "functions.h"
 
 t_bmp8 * bmp8_loadImage(const char * filename) {
-    t_bmp8 * bmp = (t_bmp8 *)malloc(sizeof(t_bmp8));
+    t_bmp8 * bmp = (t_bmp8 *) malloc(sizeof(t_bmp8));
     if (bmp == NULL) {
         perror("Error allocating memory");
         return NULL;
