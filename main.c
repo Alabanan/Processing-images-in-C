@@ -1,196 +1,153 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "functions.h"
 
-typedef struct {
-    unsigned char header[54];
-    unsigned char colorTable[1024];
-    unsigned char * data;
-    unsigned int width;
-    unsigned int height;
-    unsigned int colorDepth;
-    unsigned int dataSize;
-} t_bmp8;
-
-void readBMP8(const char * filename, t_bmp8 * bmp) {
-    FILE * file = fopen(filename, "rb");
-    if (file == NULL) {
-        perror("Error opening file");
-        return;
-    }
-
-    fread(bmp->header, 1, 54, file);
-    bmp->width = *(int*)&bmp->header[18];
-    bmp->height = *(int*)&bmp->header[22];
-    bmp->colorDepth = *(int*)&bmp->header[28];
-    bmp->dataSize = *(int*)&bmp->header[34];
-
-    if (bmp->colorDepth != 8) {
-        fprintf(stderr, "Not an 8-bit image\n");
-        fclose(file);
-        return;
-    }
-
-    fread(bmp->colorTable, 1, 1024, file);
-
-    bmp->data = (unsigned char *)malloc(bmp->dataSize);
-    fread(bmp->data, 1, bmp->dataSize, file);
-
-    fclose(file);
+// Function to display the main menu
+void displayMainMenu() {
+    printf("Please choose an option:\n");
+    printf("1. Open an image\n");
+    printf("2. Save an image\n");
+    printf("3. Apply a filter\n");
+    printf("4. Display image information\n");
+    printf("5. Quit\n");
+    printf(">>> Your choice: ");
 }
 
-t_bmp8 * bmp8_loadImage(const char * filename) {
-    t_bmp8 * bmp = (t_bmp8 *)malloc(sizeof(t_bmp8));
-    if (bmp == NULL) {
-        perror("Error allocating memory");
-        return NULL;
-    }
-
-    FILE * file = fopen(filename, "rb");
-    if (file == NULL) {
-        perror("Error opening file");
-        free(bmp);
-        return NULL;
-    }
-
-    fread(bmp->header, 1, 54, file);
-    bmp->width = *(int*)&bmp->header[18];
-    bmp->height = *(int*)&bmp->header[22];
-    bmp->colorDepth = *(int*)&bmp->header[28];
-    bmp->dataSize = *(int*)&bmp->header[34];
-
-    if (bmp->colorDepth != 8) {
-        fprintf(stderr, "Not an 8-bit image\n");
-        fclose(file);
-        free(bmp);
-        return NULL;
-    }
-
-    fread(bmp->colorTable, 1, 1024, file);
-
-    bmp->data = (unsigned char *)malloc(bmp->dataSize);
-    if (bmp->data == NULL) {
-        perror("Error allocating memory");
-        fclose(file);
-        free(bmp);
-        return NULL;
-    }
-    fread(bmp->data, 1, bmp->dataSize, file);
-
-    fclose(file);
-    return bmp;
-}
-
-void bmp8_saveImage(const char * filename, t_bmp8 * img) {
-    FILE * file = fopen(filename, "wb");
-    if (file == NULL) {
-        perror("Error opening file");
-        return;
-    }
-
-    fwrite(img->header, 1, 54, file);
-    fwrite(img->colorTable, 1, 1024, file);
-    fwrite(img->data, 1, img->dataSize, file);
-
-    if (fclose(file) != 0) {
-        perror("Error closing file");
-    }
-}
-
-void bmp8_free(t_bmp8 * img) {
-    free(img->data);
-}
-
-void bmp8_printInfo(t_bmp8 * img) {
-    printf("Width: %d\n", img->width);
-    printf("Height: %d\n", img->height);
-    printf("Color depth: %d\n", img->colorDepth);
-    printf("Data size: %d\n", img->dataSize);
-}
-
-void bmp8_negative(t_bmp8 * img) {
-    for (unsigned int i = 0; i < img->dataSize; i++) {
-        img->data[i] = 255 - img->data[i];
-    }
-}
-
-void bmp8_brightness(t_bmp8 * img, int value) {
-    for (unsigned int i = 0; i < img->dataSize; i++) {
-        int newValue = img->data[i] + value;
-        if (newValue > 255) {
-            newValue = 255;
-        } else if (newValue < 0) {
-            newValue = 0;
-        }
-        img->data[i] = (unsigned char)newValue;
-    }
-}
-
-void bmp8_threshold(t_bmp8 * img, int threshold) {
-    for (unsigned int i = 0; i < img->dataSize; i++) {
-        img->data[i] = (img->data[i] >= threshold) ? 255 : 0;
-    }
-}
-
-void bmp8_applyFilter(t_bmp8 * img, float ** kernel, int kernelSize){
-    unsigned char * newData = (unsigned char *)malloc(img->dataSize);
-    for (unsigned int i = 0; i < img->height; i++) {
-        for (unsigned int j = 0; j < img->width; j++) {
-            float sum = 0;
-            for (int k = 0; k < kernelSize; k++) {
-                for (int l = 0; l < kernelSize; l++) {
-                    int x = i + k - kernelSize / 2;
-                    int y = j + l - kernelSize / 2;
-                    if (x >= 0 && x < img->height && y >= 0 && y < img->width) {
-                        sum += img->data[x * img->width + y] * kernel[k][l];
-                    }
-                }
-            }
-            newData[i * img->width + j] = (unsigned char)sum;
-        }
-    }
-    free(img->data);
-    img->data = newData;
+// Function to display the filter menu
+void displayFilterMenu() {
+    printf("Please choose a filter:\n");
+    printf("1. Negative\n");
+    printf("2. Brightness\n");
+    printf("3. Black and white\n");
+    printf("4. Box Blur\n");
+    printf("5. Gaussian blur\n");
+    printf("6. Sharpness\n");
+    printf("7. Outline\n");
+    printf("8. Emboss\n");
+    printf("9. Return to the previous menu\n");
+    printf(">>> Your choice: ");
 }
 
 int main() {
-    t_bmp8 * img = bmp8_loadImage("lena.bmp");
-    if (img == NULL) {
-        return 1;
+    t_bmp8 * img = NULL; // Pointer to hold the loaded image
+    int choice, filterChoice; // Variables to store user choices
+    char filePath[256]; // Buffer to store file path
+    int brightnessValue, thresholdValue; // Variables for filter parameters
+
+    while (1) { // Infinite loop to keep the menu running
+        displayMainMenu(); // Display the main menu
+        scanf("%d", &choice); // Read the user's choice
+
+        switch (choice) {
+            case 1: // Open an image
+                printf("File path: ");
+                scanf("%s", filePath); // Read the file path
+                img = bmp8_loadImage(filePath); // Load the image
+                if (img == NULL) {
+                    printf("Error loading image\n");
+                } else {
+                    printf("Image loaded successfully!\n");
+                }
+                break;
+            case 2: // Save an image
+                if (img == NULL) {
+                    printf("No image loaded\n");
+                } else {
+                    printf("File path: ");
+                    scanf("%s", filePath); // Read the file path
+                    bmp8_saveImage(filePath, img); // Save the image
+                    printf("Image saved successfully!\n");
+                }
+                break;
+            case 3: // Apply a filter
+                if (img == NULL) {
+                    printf("No image loaded\n");
+                } else {
+                    displayFilterMenu(); // Display the filter menu
+                    scanf("%d", &filterChoice); // Read the filter choice
+                    switch (filterChoice) {
+                        case 1: // Apply negative filter
+                            bmp8_negative(img);
+                            printf("Filter applied successfully!\n");
+                            break;
+                        case 2: // Apply brightness filter
+                            printf("Brightness value: ");
+                            scanf("%d", &brightnessValue); // Read brightness value
+                            bmp8_brightness(img, brightnessValue);
+                            printf("Filter applied successfully!\n");
+                            break;
+                        case 3: // Apply threshold filter
+                            printf("Threshold value: ");
+                            scanf("%d", &thresholdValue); // Read threshold value
+                            bmp8_threshold(img, thresholdValue);
+                            printf("Filter applied successfully!\n");
+                            break;
+                        case 4: // Apply box blur filter
+                            float boxBlurKernel[3][3] = {
+                                {1.0/9, 1.0/9, 1.0/9},
+                                {1.0/9, 1.0/9, 1.0/9},
+                                {1.0/9, 1.0/9, 1.0/9}
+                            };
+                            bmp8_applyFilter(img, (float **)boxBlurKernel, 3);
+                            printf("Box Blur filter applied successfully!\n");
+                            break;
+                        case 5: // Apply Gaussian blur filter
+                            float gaussianBlurKernel[3][3] = {
+                                {1.0/16, 2.0/16, 1.0/16},
+                                {2.0/16, 4.0/16, 2.0/16},
+                                {1.0/16, 2.0/16, 1.0/16}
+                            };
+                            bmp8_applyFilter(img, (float **)gaussianBlurKernel, 3);
+                            printf("Gaussian Blur filter applied successfully!\n");
+                            break;
+                        case 6: // Apply sharpness filter
+                            float sharpnessKernel[3][3] = {
+                                {0, -1, 0},
+                                {-1, 5, -1},
+                                {0, -1, 0}
+                            };
+                            bmp8_applyFilter(img, (float **)sharpnessKernel, 3);
+                            printf("Sharpness filter applied successfully!\n");
+                            break;
+                        case 7: // Apply outline filter
+                            float outlineKernel[3][3] = {
+                                {-1, -1, -1},
+                                {-1, 8, -1},
+                                {-1, -1, -1}
+                            };
+                            bmp8_applyFilter(img, (float **)outlineKernel, 3);
+                            printf("Outline filter applied successfully!\n");
+                            break;
+                        case 8: // Apply emboss filter
+                            float embossKernel[3][3] = {
+                                {-2, -1, 0},
+                                {-1, 1, 1},
+                                {0, 1, 2}
+                            };
+                            bmp8_applyFilter(img, (float **)embossKernel, 3);
+                            printf("Emboss filter applied successfully!\n");
+                            break;
+                        case 9: // Return to the previous menu
+                            break;
+                        default:
+                            printf("Invalid choice\n");
+                    }
+                }
+                break;
+            case 4: // Display image information
+                if (img == NULL) {
+                    printf("No image loaded\n");
+                } else {
+                    bmp8_printInfo(img); // Print image information
+                }
+                break;
+            case 5: // Quit the program
+                if (img != NULL) {
+                    bmp8_free(img); // Free the loaded image
+                }
+                return 0; // Exit the program
+            default:
+                printf("Invalid choice\n");
+        }
     }
-
-    bmp8_printInfo(img);
-    bmp8_negative(img);
-    bmp8_saveImage("lena_negative.bmp", img);
-
-    bmp8_brightness(img, 50);
-    bmp8_saveImage("lena_brightness.bmp", img);
-
-    bmp8_threshold(img, 128);
-    bmp8_saveImage("lena_threshold.bmp", img);
-
-    float ** kernel = (float **)malloc(3 * sizeof(float *));
-    for (int i = 0; i < 3; i++) {
-        kernel[i] = (float *)malloc(3 * sizeof(float));
-    }
-    kernel[0][0] = 1 / 9;
-    kernel[0][1] = 1 / 9;
-    kernel[0][2] = 1 / 9;
-    kernel[1][0] = 1 / 9;
-    kernel[1][1] = 1 / 9;
-    kernel[1][2] = 1 / 9;
-    kernel[2][0] = 1 / 9;
-    kernel[2][1] = 1 / 9;
-    kernel[2][2] = 1 / 9;
-    bmp8_applyFilter(img, kernel, 3);
-    bmp8_saveImage("lena_blur.bmp", img);
-
-    for (int i = 0; i < 3; i++) {
-        free(kernel[i]);
-    }
-    free(kernel);
-
-    bmp8_free(img);
-    return 0;
 }
-
-
