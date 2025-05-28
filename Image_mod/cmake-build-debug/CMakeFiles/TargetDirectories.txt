@@ -1,3 +1,0 @@
-C:/Users/grego/CLionProjects/Image_mod/cmake-build-debug/CMakeFiles/Image_mod.dir
-C:/Users/grego/CLionProjects/Image_mod/cmake-build-debug/CMakeFiles/edit_cache.dir
-C:/Users/grego/CLionProjects/Image_mod/cmake-build-debug/CMakeFiles/rebuild_cache.dir
