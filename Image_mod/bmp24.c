@@ -1,3 +1,4 @@
+// bmp24.c
 #include "bmp24.h"
 #include "bmp8.h"
 #include "utils.h"
@@ -28,12 +29,12 @@ t_pixel **bmp24_allocateDataPixels(int width, int height) {
 
     t_pixel **pixels = (t_pixel **)malloc(height * sizeof(t_pixel *));
     if (!pixels) {
-        fprintf(stderr, "Error: Failed to allocate memory for pixel rows.\n");
+        printf("Error: Failed to allocate memory for pixel rows.\n");
         return NULL;
     }
     pixels[0] = (t_pixel *)calloc(height * width, sizeof(t_pixel));
     if (!pixels[0]) {
-        fprintf(stderr, "Error: Failed to allocate memory for pixel data block.\n");
+        printf("Error: Failed to allocate memory for pixel data block.\n");
         free(pixels);
         return NULL;
     }
@@ -59,7 +60,7 @@ t_bmp24 *bmp24_allocate(int width, int height, int colorDepth) {
 
     t_bmp24 *img = (t_bmp24 *)malloc(sizeof(t_bmp24));
     if (!img) {
-        fprintf(stderr, "Error: Failed to allocate memory for t_bmp24 structure.\n");
+        printf("Error: Failed to allocate memory for t_bmp24 structure.\n");
         return NULL;
     }
 
@@ -103,7 +104,7 @@ void bmp24_free(t_bmp24 *img) {
 t_bmp24 *bmp24_loadImage(const char *filename) {
     FILE *file = fopen(filename, "rb");
     if (!file) {
-        fprintf(stderr, "Error: Cannot open file %s\n", filename);
+        printf("Error: Cannot open file %s\n", filename);
         return NULL;
     }
 
@@ -111,35 +112,35 @@ t_bmp24 *bmp24_loadImage(const char *filename) {
     t_bmp_info info;
 
     if (fread(&header, sizeof(t_bmp_header), 1, file) != 1) {
-         fprintf(stderr, "Error: Failed to read BMP header from %s.\n", filename);
+         printf("Error: Failed to read BMP header from %s.\n", filename);
          fclose(file); return NULL;
     }
     if (fread(&info, sizeof(t_bmp_info), 1, file) != 1) {
-        fprintf(stderr, "Error: Failed to read BMP info header from %s.\n", filename);
+        printf("Error: Failed to read BMP info header from %s.\n", filename);
          fclose(file); return NULL;
     }
 
 
     if (header.type != BITMAP_MAGIC) {
-        fprintf(stderr, "Error: File %s is not a BMP file (Magic number 0x%X).\n", filename, header.type);
+        printf("Error: File %s is not a BMP file (Magic number 0x%X).\n", filename, header.type);
         fclose(file);
         return NULL;
     }
     if (info.size != BMP_INFOHEADER_SIZE) {
-         fprintf(stderr, "Warning: BMP info header size is %u, expected %d. May be an unsupported BMP variant.\n", info.size, BMP_INFOHEADER_SIZE);
+         printf("Warning: BMP info header size is %u, expected %d. May be an unsupported BMP variant.\n", info.size, BMP_INFOHEADER_SIZE);
     }
     if (info.bits != 24) {
-        fprintf(stderr, "Error: File %s is not a 24-bit BMP (Bits=%u).\n", filename, info.bits);
+        printf("Error: File %s is not a 24-bit BMP (Bits=%u).\n", filename, info.bits);
         fclose(file);
         return NULL;
     }
      if (info.compression != NO_COMPRESSION) {
-        fprintf(stderr, "Error: Compression is not supported (Compression=%u).\n", info.compression);
+        printf("Error: Compression is not supported (Compression=%u).\n", info.compression);
         fclose(file);
         return NULL;
     }
     if (info.height < 0) {
-         fprintf(stderr, "Warning: Image height is negative (top-down BMP). Handling as positive.\n");
+         printf("Warning: Image height is negative (top-down BMP). Handling as positive.\n");
          info.height = -info.height;
     }
 
@@ -158,7 +159,7 @@ t_bmp24 *bmp24_loadImage(const char *filename) {
 
 
     if (bmp24_readPixelData(img, file) != 0) {
-        fprintf(stderr, "Error: Failed to read pixel data from %s.\n", filename);
+        printf("Error: Failed to read pixel data from %s.\n", filename);
         fclose(file);
         bmp24_free(img);
         return NULL;
@@ -173,13 +174,13 @@ t_bmp24 *bmp24_loadImage(const char *filename) {
 // [Part 2.4.4 Implementation] Save 24-bit BMP
 void bmp24_saveImage(const char *filename, t_bmp24 *img) {
     if (!img || !img->data) {
-        fprintf(stderr, "Error: Cannot save NULL or invalid image data.\n");
+        printf("Error: Cannot save NULL or invalid image data.\n");
         return;
     }
 
     FILE *file = fopen(filename, "wb");
     if (!file) {
-        fprintf(stderr, "Error: Cannot open file %s for writing.\n", filename);
+        printf("Error: Cannot open file %s for writing.\n", filename);
         return;
     }
 
@@ -204,17 +205,17 @@ void bmp24_saveImage(const char *filename, t_bmp24 *img) {
 
 
     if (fwrite(&img->header, sizeof(t_bmp_header), 1, file) != 1) {
-        fprintf(stderr, "Error: Failed to write BMP header to %s.\n", filename);
+        printf("Error: Failed to write BMP header to %s.\n", filename);
         fclose(file); return;
     }
      if (fwrite(&img->header_info, sizeof(t_bmp_info), 1, file) != 1) {
-        fprintf(stderr, "Error: Failed to write BMP info header to %s.\n", filename);
+        printf("Error: Failed to write BMP info header to %s.\n", filename);
         fclose(file); return;
     }
 
 
     if (bmp24_writePixelData(img, file) != 0) {
-        fprintf(stderr, "Error: Failed to write pixel data to %s.\n", filename);
+        printf("Error: Failed to write pixel data to %s.\n", filename);
     } else {
          printf("Image saved successfully as %s.\n", filename);
     }
@@ -253,7 +254,7 @@ int bmp24_readPixelData(t_bmp24 *img, FILE *file) {
 
     unsigned char *row_buffer = (unsigned char *)malloc(row_stride);
     if (!row_buffer) {
-        fprintf(stderr, "Error: Failed to allocate buffer for reading rows.\n");
+        printf("Error: Failed to allocate buffer for reading rows.\n");
         return -1;
     }
 
@@ -261,12 +262,12 @@ int bmp24_readPixelData(t_bmp24 *img, FILE *file) {
         uint32_t row_file_offset = data_offset + (height - 1 - y) * row_stride;
 
         if (fseek(file, row_file_offset, SEEK_SET) != 0) {
-             fprintf(stderr, "Error: fseek failed for row %d (file row %d) offset %u\n", y, height - 1- y, row_file_offset);
+             printf("Error: fseek failed for row %d (file row %d) offset %u\n", y, height - 1- y, row_file_offset);
              free(row_buffer); return -1;
         }
         if (fread(row_buffer, 1, row_stride, file) != row_stride) {
-            fprintf(stderr, "Error: Failed to read data for row %d (file row %d).\n", y, height - 1- y);
-             if(ferror(file)) perror("fread error"); else if (feof(file)) fprintf(stderr, "fread error: unexpected EOF\n");
+            printf("Error: Failed to read data for row %d (file row %d).\n", y, height - 1- y);
+             if(ferror(file)) perror("fread error"); else if (feof(file)) printf("fread error: unexpected EOF\n");
             free(row_buffer);
             return -1;
         }
@@ -294,7 +295,7 @@ int bmp24_writePixelData(t_bmp24 *img, FILE *file) {
 
     unsigned char *row_buffer = (unsigned char *)malloc(row_stride);
      if (!row_buffer) {
-        fprintf(stderr, "Error: Failed to allocate buffer for writing rows.\n");
+        printf("Error: Failed to allocate buffer for writing rows.\n");
         return -1;
     }
 
@@ -314,11 +315,11 @@ int bmp24_writePixelData(t_bmp24 *img, FILE *file) {
         uint32_t row_file_offset = data_offset + (height - 1 - y) * row_stride;
 
         if (fseek(file, row_file_offset, SEEK_SET) != 0) {
-             fprintf(stderr, "Error: fseek failed for writing row %d (file row %d) offset %u\n", y, height - 1 - y, row_file_offset);
+             printf("Error: fseek failed for writing row %d (file row %d) offset %u\n", y, height - 1 - y, row_file_offset);
              free(row_buffer); return -1;
         }
         if (fwrite(row_buffer, 1, row_stride, file) != row_stride) {
-            fprintf(stderr, "Error: Failed to write data for row %d (file row %d).\n", y, height - 1 - y);
+            printf("Error: Failed to write data for row %d (file row %d).\n", y, height - 1 - y);
             if(ferror(file)) perror("fwrite error");
             free(row_buffer);
             return -1;
@@ -407,7 +408,7 @@ t_pixel bmp24_convolution_helper(t_pixel **original_data, int x, int y, int widt
 // [Part 2.6 Implementation] Apply Filter Wrapper: Applies kernel to whole image
 void bmp24_applyFilter(t_bmp24 *img, float **kernel, int kernelSize) {
      if (!img || !img->data || !kernel || kernelSize <= 0 || kernelSize % 2 == 0) {
-        fprintf(stderr, "Error: Invalid arguments for applyFilter (24-bit).\n");
+        printf("Error: Invalid arguments for applyFilter (24-bit).\n");
         return;
     }
     int width = img->width;
@@ -416,7 +417,7 @@ void bmp24_applyFilter(t_bmp24 *img, float **kernel, int kernelSize) {
 
     t_pixel **tempData = bmp24_allocateDataPixels(width, height);
     if (!tempData) {
-        fprintf(stderr, "Error: Failed to allocate temp data for filter (24-bit).\n");
+        printf("Error: Failed to allocate temp data for filter (24-bit).\n");
         return;
     }
      for (int y = 0; y < height; ++y) {
@@ -437,7 +438,7 @@ void bmp24_applyFilter(t_bmp24 *img, float **kernel, int kernelSize) {
 void bmp24_boxBlur(t_bmp24 *img) {
     int size = 3;
     float **kernel = allocate_kernel(size);
-    if (!kernel) { fprintf(stderr,"Kernel alloc failed for box blur (24-bit)\n"); return; }
+    if (!kernel) { printf("Kernel alloc failed for box blur (24-bit)\n"); return; }
     float val = 1.0f / 9.0f;
     for(int i=0; i<size; ++i) for(int j=0; j<size; ++j) kernel[i][j] = val;
     bmp24_applyFilter(img, kernel, size);
@@ -447,7 +448,7 @@ void bmp24_boxBlur(t_bmp24 *img) {
 void bmp24_gaussianBlur(t_bmp24 *img) {
     int size = 3;
     float **kernel = allocate_kernel(size);
-    if (!kernel) { fprintf(stderr,"Kernel alloc failed for gaussian blur (24-bit)\n"); return; }
+    if (!kernel) { printf("Kernel alloc failed for gaussian blur (24-bit)\n"); return; }
     kernel[0][0] = 1.0f/16.0f; kernel[0][1] = 2.0f/16.0f; kernel[0][2] = 1.0f/16.0f;
     kernel[1][0] = 2.0f/16.0f; kernel[1][1] = 4.0f/16.0f; kernel[1][2] = 2.0f/16.0f;
     kernel[2][0] = 1.0f/16.0f; kernel[2][1] = 2.0f/16.0f; kernel[2][2] = 1.0f/16.0f;
@@ -458,7 +459,7 @@ void bmp24_gaussianBlur(t_bmp24 *img) {
 void bmp24_outline(t_bmp24 *img) {
     int size = 3;
     float **kernel = allocate_kernel(size);
-     if (!kernel) { fprintf(stderr,"Kernel alloc failed for outline (24-bit)\n"); return; }
+     if (!kernel) { printf("Kernel alloc failed for outline (24-bit)\n"); return; }
     kernel[0][0] = -1.0f; kernel[0][1] = -1.0f; kernel[0][2] = -1.0f;
     kernel[1][0] = -1.0f; kernel[1][1] =  8.0f; kernel[1][2] = -1.0f;
     kernel[2][0] = -1.0f; kernel[2][1] = -1.0f; kernel[2][2] = -1.0f;
@@ -469,7 +470,7 @@ void bmp24_outline(t_bmp24 *img) {
 void bmp24_emboss(t_bmp24 *img) {
     int size = 3;
     float **kernel = allocate_kernel(size);
-     if (!kernel) { fprintf(stderr,"Kernel alloc failed for emboss (24-bit)\n"); return; }
+     if (!kernel) { printf("Kernel alloc failed for emboss (24-bit)\n"); return; }
     kernel[0][0] = -2.0f; kernel[0][1] = -1.0f; kernel[0][2] =  0.0f;
     kernel[1][0] = -1.0f; kernel[1][1] =  1.0f; kernel[1][2] =  1.0f;
     kernel[2][0] =  0.0f; kernel[2][1] =  1.0f; kernel[2][2] =  2.0f;
@@ -480,7 +481,7 @@ void bmp24_emboss(t_bmp24 *img) {
 void bmp24_sharpen(t_bmp24 *img) {
      int size = 3;
     float **kernel = allocate_kernel(size);
-     if (!kernel) { fprintf(stderr,"Kernel alloc failed for sharpen (24-bit)\n"); return; }
+     if (!kernel) { printf("Kernel alloc failed for sharpen (24-bit)\n"); return; }
     kernel[0][0] =  0.0f; kernel[0][1] = -1.0f; kernel[0][2] =  0.0f;
     kernel[1][0] = -1.0f; kernel[1][1] =  5.0f; kernel[1][2] = -1.0f;
     kernel[2][0] =  0.0f; kernel[2][1] = -1.0f; kernel[2][2] =  0.0f;
@@ -504,7 +505,7 @@ void bmp24_equalize(t_bmp24 *img) {
     unsigned int *y_hist_eq = NULL;
 
     if (!y_channel || !u_channel || !v_channel || !y_hist) {
-        fprintf(stderr, "Error: Failed to allocate memory for YUV equalization.\n");
+        printf("Error: Failed to allocate memory for YUV equalization.\n");
         free(y_channel); free(u_channel); free(v_channel); free(y_hist);
         return;
     }
@@ -526,7 +527,7 @@ void bmp24_equalize(t_bmp24 *img) {
     // Step 2 & 3: Compute normalized CDF for Y channel
     y_hist_eq = bmp8_computeCDF(y_hist, numPixels);
     if (!y_hist_eq) {
-        fprintf(stderr, "Error: Failed compute Y channel CDF.\n");
+        printf("Error: Failed compute Y channel CDF.\n");
         free(y_channel); free(u_channel); free(v_channel); free(y_hist);
         return;
     }

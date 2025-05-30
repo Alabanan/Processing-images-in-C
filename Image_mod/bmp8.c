@@ -1,6 +1,11 @@
+// bmp8.c
 #include "bmp8.h"
 #include "utils.h"
 #include <math.h>
+#include <string.h> // For memcpy
+#include <stdio.h> // For printf, FILE, fopen, etc.
+#include <stdlib.h> // For malloc, free, calloc
+
 
 #define WIDTH_OFFSET 18
 #define HEIGHT_OFFSET 22
@@ -14,20 +19,20 @@
 t_bmp8 *bmp8_loadImage(const char *filename) {
     FILE *file = fopen(filename, "rb");
     if (!file) {
-        fprintf(stderr, "Error: Cannot open file %s\n", filename);
+        printf("Error: Cannot open file %s\n", filename);
         return NULL;
     }
 
     t_bmp8 *img = (t_bmp8 *)malloc(sizeof(t_bmp8));
     if (!img) {
-        fprintf(stderr, "Error: Cannot allocate memory for image structure.\n");
+        printf("Error: Cannot allocate memory for image structure.\n");
         fclose(file);
         return NULL;
     }
     img->data = NULL;
 
     if (fread(img->header, 1, HEADER_SIZE, file) != HEADER_SIZE) {
-        fprintf(stderr, "Error: Failed to read BMP header from %s.\n", filename);
+        printf("Error: Failed to read BMP header from %s.\n", filename);
         fclose(file);
         bmp8_free(img);
         return NULL;
@@ -45,23 +50,19 @@ t_bmp8 *bmp8_loadImage(const char *filename) {
     }
 
     if (img->header[0] != 'B' || img->header[1] != 'M') {
-        fprintf(stderr, "Error: File %s is not a valid BMP file (Invalid signature).\n", filename);
+        printf("Error: File %s is not a valid BMP file (Invalid signature).\n", filename);
         fclose(file);
         bmp8_free(img);
         return NULL;
     }
     if (img->colorDepth != 8) {
-        fprintf(stderr, "Error: Image %s is not an 8-bit grayscale image (colorDepth=%u).\n", filename, img->colorDepth);
+        printf("Error: Image %s is not an 8-bit grayscale image (colorDepth=%u).\n", filename, img->colorDepth);
         fclose(file);
         bmp8_free(img);
         return NULL;
     }
-    if (dataOffset < HEADER_SIZE + COLOR_TABLE_SIZE) {
-        fprintf(stderr, "Warning: BMP data offset (%u) seems incorrect, expected at least %d.\n", dataOffset, HEADER_SIZE + COLOR_TABLE_SIZE);
-    }
-
     if (fread(img->colorTable, 1, COLOR_TABLE_SIZE, file) != COLOR_TABLE_SIZE) {
-        fprintf(stderr, "Error: Failed to read color table from %s.\n", filename);
+        printf("Error: Failed to read color table from %s.\n", filename);
         fclose(file);
         bmp8_free(img);
         return NULL;
@@ -69,21 +70,21 @@ t_bmp8 *bmp8_loadImage(const char *filename) {
 
     img->data = (unsigned char *)malloc(img->dataSize);
     if (!img->data) {
-        fprintf(stderr, "Error: Cannot allocate memory for pixel data (%u bytes).\n", img->dataSize);
+        printf("Error: Cannot allocate memory for pixel data (%u bytes).\n", img->dataSize);
         fclose(file);
         bmp8_free(img);
         return NULL;
     }
 
     if (fseek(file, dataOffset, SEEK_SET) != 0) {
-         fprintf(stderr, "Error: Failed to seek to pixel data offset (%u) in %s.\n", dataOffset, filename);
+         printf("Error: Failed to seek to pixel data offset (%u) in %s.\n", dataOffset, filename);
         fclose(file);
         bmp8_free(img);
         return NULL;
     }
     if (fread(img->data, 1, img->dataSize, file) != img->dataSize) {
-        fprintf(stderr, "Error: Failed to read pixel data from %s.\n", filename);
-         if(ferror(file)) perror("fread error"); else if(feof(file)) fprintf(stderr,"fread error: unexpected EOF\n");
+        printf("Error: Failed to read pixel data from %s.\n", filename);
+         if(ferror(file)) perror("fread error"); else if(feof(file)) printf("fread error: unexpected EOF\n");
         fclose(file);
         bmp8_free(img);
         return NULL;
@@ -97,13 +98,13 @@ t_bmp8 *bmp8_loadImage(const char *filename) {
 // [Part 1.2.2 Implementation] Writes the t_bmp8 struct data back to a BMP file.
 void bmp8_saveImage(const char *filename, t_bmp8 *img) {
     if (!img || !img->data) {
-        fprintf(stderr, "Error: Cannot save NULL or invalid image.\n");
+        printf("Error: Cannot save NULL or invalid image.\n");
         return;
     }
 
     FILE *file = fopen(filename, "wb");
     if (!file) {
-        fprintf(stderr, "Error: Cannot open file %s for writing.\n", filename);
+        printf("Error: Cannot open file %s for writing.\n", filename);
         return;
     }
 
@@ -113,19 +114,19 @@ void bmp8_saveImage(const char *filename, t_bmp8 *img) {
 
 
     if (fwrite(img->header, 1, HEADER_SIZE, file) != HEADER_SIZE) {
-        fprintf(stderr, "Error: Failed to write BMP header to %s.\n", filename);
+        printf("Error: Failed to write BMP header to %s.\n", filename);
         fclose(file);
         return;
     }
 
     if (fwrite(img->colorTable, 1, COLOR_TABLE_SIZE, file) != COLOR_TABLE_SIZE) {
-        fprintf(stderr, "Error: Failed to write color table to %s.\n", filename);
+        printf("Error: Failed to write color table to %s.\n", filename);
         fclose(file);
         return;
     }
 
     if (fwrite(img->data, 1, img->dataSize, file) != img->dataSize) {
-        fprintf(stderr, "Error: Failed to write pixel data to %s.\n", filename);
+        printf("Error: Failed to write pixel data to %s.\n", filename);
         fclose(file);
         return;
     }
@@ -197,7 +198,7 @@ void bmp8_threshold(t_bmp8 *img, int threshold) {
 // [Part 1.4.1 Implementation] Applies convolution filter.
 void bmp8_applyFilter(t_bmp8 *img, float **kernel, int kernelSize) {
     if (!img || !img->data || !kernel || kernelSize <= 0 || kernelSize % 2 == 0) {
-        fprintf(stderr, "Error: Invalid arguments for applyFilter (8-bit).\n");
+        printf("Error: Invalid arguments for applyFilter (8-bit).\n");
         return;
     }
 
@@ -208,7 +209,7 @@ void bmp8_applyFilter(t_bmp8 *img, float **kernel, int kernelSize) {
 
     unsigned char *tempData = (unsigned char *)malloc(dataSize);
     if (!tempData) {
-        fprintf(stderr, "Error: Failed to allocate memory for temp data in filter (8-bit).\n");
+        printf("Error: Failed to allocate memory for temp data in filter (8-bit).\n");
         return;
     }
     memcpy(tempData, img->data, dataSize);
@@ -240,7 +241,7 @@ void bmp8_applyFilter(t_bmp8 *img, float **kernel, int kernelSize) {
 void bmp8_boxBlur(t_bmp8 *img) {
     int size = 3;
     float **kernel = allocate_kernel(size);
-    if (!kernel) { fprintf(stderr,"Kernel alloc failed for box blur\n"); return; }
+    if (!kernel) { printf("Kernel alloc failed for box blur\n"); return; }
     float val = 1.0f / 9.0f;
     for(int i=0; i<size; ++i) for(int j=0; j<size; ++j) kernel[i][j] = val;
     bmp8_applyFilter(img, kernel, size);
@@ -250,7 +251,7 @@ void bmp8_boxBlur(t_bmp8 *img) {
 void bmp8_gaussianBlur(t_bmp8 *img) {
     int size = 3;
     float **kernel = allocate_kernel(size);
-    if (!kernel) { fprintf(stderr,"Kernel alloc failed for gaussian blur\n"); return; }
+    if (!kernel) { printf("Kernel alloc failed for gaussian blur\n"); return; }
     kernel[0][0] = 1.0f/16.0f; kernel[0][1] = 2.0f/16.0f; kernel[0][2] = 1.0f/16.0f;
     kernel[1][0] = 2.0f/16.0f; kernel[1][1] = 4.0f/16.0f; kernel[1][2] = 2.0f/16.0f;
     kernel[2][0] = 1.0f/16.0f; kernel[2][1] = 2.0f/16.0f; kernel[2][2] = 1.0f/16.0f;
@@ -260,7 +261,7 @@ void bmp8_gaussianBlur(t_bmp8 *img) {
 void bmp8_outline(t_bmp8 *img) {
     int size = 3;
     float **kernel = allocate_kernel(size);
-     if (!kernel) { fprintf(stderr,"Kernel alloc failed for outline\n"); return; }
+     if (!kernel) { printf("Kernel alloc failed for outline\n"); return; }
     kernel[0][0] = -1.0f; kernel[0][1] = -1.0f; kernel[0][2] = -1.0f;
     kernel[1][0] = -1.0f; kernel[1][1] =  8.0f; kernel[1][2] = -1.0f;
     kernel[2][0] = -1.0f; kernel[2][1] = -1.0f; kernel[2][2] = -1.0f;
@@ -271,7 +272,7 @@ void bmp8_outline(t_bmp8 *img) {
 void bmp8_emboss(t_bmp8 *img) {
     int size = 3;
     float **kernel = allocate_kernel(size);
-     if (!kernel) { fprintf(stderr,"Kernel alloc failed for emboss\n"); return; }
+     if (!kernel) { printf("Kernel alloc failed for emboss\n"); return; }
     kernel[0][0] = -2.0f; kernel[0][1] = -1.0f; kernel[0][2] =  0.0f;
     kernel[1][0] = -1.0f; kernel[1][1] =  1.0f; kernel[1][2] =  1.0f;
     kernel[2][0] =  0.0f; kernel[2][1] =  1.0f; kernel[2][2] =  2.0f;
@@ -282,7 +283,7 @@ void bmp8_emboss(t_bmp8 *img) {
 void bmp8_sharpen(t_bmp8 *img) {
      int size = 3;
     float **kernel = allocate_kernel(size);
-     if (!kernel) { fprintf(stderr,"Kernel alloc failed for sharpen\n"); return; }
+     if (!kernel) { printf("Kernel alloc failed for sharpen\n"); return; }
     kernel[0][0] =  0.0f; kernel[0][1] = -1.0f; kernel[0][2] =  0.0f;
     kernel[1][0] = -1.0f; kernel[1][1] =  5.0f; kernel[1][2] = -1.0f;
     kernel[2][0] =  0.0f; kernel[2][1] = -1.0f; kernel[2][2] =  0.0f;
@@ -296,7 +297,7 @@ unsigned int *bmp8_computeHistogram(t_bmp8 *img) {
 
     unsigned int *hist = (unsigned int *)calloc(256, sizeof(unsigned int));
     if (!hist) {
-        fprintf(stderr, "Error: Failed to allocate memory for histogram (8-bit).\n");
+        printf("Error: Failed to allocate memory for histogram (8-bit).\n");
         return NULL;
     }
 
@@ -314,7 +315,7 @@ unsigned int *bmp8_computeCDF(unsigned int *hist, int numPixels) {
     unsigned int *cdf = (unsigned int *)calloc(256, sizeof(unsigned int));
     unsigned int *hist_eq = (unsigned int *)calloc(256, sizeof(unsigned int)); // mapping table
     if (!cdf || !hist_eq) {
-        fprintf(stderr, "Error: Failed to allocate memory for CDF/HistEq (8-bit).\n");
+        printf("Error: Failed to allocate memory for CDF/HistEq (8-bit).\n");
         free(cdf);
         free(hist_eq);
         return NULL;
@@ -337,13 +338,13 @@ unsigned int *bmp8_computeCDF(unsigned int *hist, int numPixels) {
         cdf_min = cdf[min_gray_level];
     } else {
         cdf_min = 0;
-         fprintf(stderr, "Warning: Could not find minimum non-zero CDF value. Equalization might be incorrect.\n");
+         printf("Warning: Could not find minimum non-zero CDF value. Equalization might be incorrect.\n");
     }
 
 
     double denominator = (double)numPixels - cdf_min;
     if (denominator <= 0) {
-        fprintf(stderr,"Warning: Cannot normalize histogram (numPixels=%d, cdf_min=%u). Mapping gray levels linearly.\n", numPixels, cdf_min);
+        printf("Warning: Cannot normalize histogram (numPixels=%d, cdf_min=%u). Mapping gray levels linearly.\n", numPixels, cdf_min);
         for(int i=0; i<256; ++i) hist_eq[i] = i;
     } else {
         for (int i = 0; i < 256; ++i) {

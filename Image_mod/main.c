@@ -1,3 +1,4 @@
+// main.c
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,7 +17,7 @@ void get_filename(char *buffer, int size) {
         buffer[strcspn(buffer, "\n")] = 0;
     } else {
         buffer[0] = '\0';
-        fprintf(stderr, "Error reading filename.\n");
+        printf("Error reading filename.\n");
     }
 }
 
@@ -46,7 +47,7 @@ int main() {
         printf(">>> Your choice: ");
 
         if (scanf("%d", &choice) != 1) {
-            fprintf(stderr, "Invalid input. Please enter a number.\n");
+            printf("Invalid input. Please enter a number.\n");
             clear_input_buffer();
             choice = 0;
             continue;

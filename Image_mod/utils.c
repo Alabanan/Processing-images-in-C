@@ -1,22 +1,23 @@
+// utils.c
 #include "utils.h"
 #include <math.h>
 #include <stdlib.h>
-#include <string.h>
+#include <string.h> // For memcpy if used, or other string functions. It was present in original.
 
 // [Part 2.4.1 Implementation] Reads raw data using fseek and fread. Basic error check.
 void file_rawRead(uint32_t position, void *buffer, uint32_t size, size_t n, FILE *file) {
     if (!file || !buffer) return;
     if (fseek(file, position, SEEK_SET) != 0) {
-        fprintf(stderr, "Error: fseek failed to position %u.\n", position);
+        printf("Error: fseek failed to position %u.\n", position);
         return;
     }
     if (fread(buffer, size, n, file) != n) {
-        fprintf(stderr, "Error: fread failed to read %zu elements of size %u at position %u.\n", n, size, position);
-         if(ferror(file)) {
+        printf("Error: fread failed to read %zu elements of size %u at position %u.\n", n, size, position);
+        if (ferror(file)) {
             perror("fread error");
-         } else if (feof(file)) {
-             fprintf(stderr, "fread error: unexpected end of file.\n");
-         }
+        } else if (feof(file)) {
+            printf("fread error: unexpected end of file.\n");
+        }
     }
 }
 
@@ -24,14 +25,14 @@ void file_rawRead(uint32_t position, void *buffer, uint32_t size, size_t n, FILE
 void file_rawWrite(uint32_t position, void *buffer, uint32_t size, size_t n, FILE *file) {
     if (!file || !buffer) return;
     if (fseek(file, position, SEEK_SET) != 0) {
-        fprintf(stderr, "Error: fseek failed to position %u for writing.\n", position);
+        printf("Error: fseek failed to position %u for writing.\n", position);
         return;
     }
     if (fwrite(buffer, size, n, file) != n) {
-        fprintf(stderr, "Error: fwrite failed to write %zu elements of size %u at position %u.\n", n, size, position);
-         if(ferror(file)) {
+        printf("Error: fwrite failed to write %zu elements of size %u at position %u.\n", n, size, position);
+        if (ferror(file)) {
             perror("fwrite error");
-         }
+        }
     }
 }
 
@@ -52,7 +53,7 @@ float** allocate_kernel(int size) {
 
 void free_kernel(float **kernel, int size) {
     if (kernel) {
-        if(kernel[0]) free(kernel[0]);
+        if (kernel[0]) free(kernel[0]);
         free(kernel);
     }
     (void)size;
@@ -98,6 +99,6 @@ t_pixel yuv_to_rgb(t_yuv yuv) {
 }
 
 int calculate_row_stride(int width) {
-    int bytes_per_row = width * 3;
+    int bytes_per_row = width * 3; // For 24-bit BMP
     return (bytes_per_row + 3) & ~3;
 }
